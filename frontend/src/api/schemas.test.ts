@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { errorSchema, productoSchema, productosSchema } from './schemas'
+import { errorSchema, pedidoSchema, productoSchema, productosSchema } from './schemas'
 
 const expresoMediano = {
   id: 'c5',
@@ -72,5 +72,40 @@ describe('errorSchema', () => {
   it('rechaza un cuerpo sin error o con error que no es texto', () => {
     expect(errorSchema.safeParse({}).success).toBe(false)
     expect(errorSchema.safeParse({ error: 500 }).success).toBe(false)
+  })
+})
+
+const pedidoPendiente = {
+  id: 'pedido-1',
+  estado: 'pendiente',
+  mesaId: 'mesa-4',
+  items: [
+    { productoId: 'c5', cantidad: 2 },
+    { productoId: 'p1', cantidad: 1 },
+  ],
+  total: 17220,
+}
+
+describe('pedidoSchema', () => {
+  it('acepta un pedido con mesa, ítems y total', () => {
+    expect(pedidoSchema.parse(pedidoPendiente)).toEqual(pedidoPendiente)
+  })
+
+  it('acepta un pedido para retirar en la barra (sin mesaId)', () => {
+    const { id, estado, items, total } = pedidoPendiente
+    const sinMesa = { id, estado, items, total }
+    expect(pedidoSchema.parse(sinMesa)).toEqual(sinMesa)
+  })
+
+  it('rechaza un pedido sin total', () => {
+    const { id, estado, items } = pedidoPendiente
+    expect(pedidoSchema.safeParse({ id, estado, items }).success).toBe(false)
+  })
+
+  it('rechaza una cantidad que no es un entero positivo', () => {
+    const cantidadCero = { ...pedidoPendiente, items: [{ productoId: 'c5', cantidad: 0 }] }
+    const cantidadDecimal = { ...pedidoPendiente, items: [{ productoId: 'c5', cantidad: 1.5 }] }
+    expect(pedidoSchema.safeParse(cantidadCero).success).toBe(false)
+    expect(pedidoSchema.safeParse(cantidadDecimal).success).toBe(false)
   })
 })
