@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { errorSchema, pedidoSchema, productoSchema, productosSchema } from './schemas'
+import {crearPedidoRespuestaSchema, errorSchema, pedidoSchema, productoSchema, productosSchema } from './schemas'
 
 const expresoMediano = {
   id: 'c5',
@@ -107,5 +107,17 @@ describe('pedidoSchema', () => {
     const cantidadDecimal = { ...pedidoPendiente, items: [{ productoId: 'c5', cantidad: 1.5 }] }
     expect(pedidoSchema.safeParse(cantidadCero).success).toBe(false)
     expect(pedidoSchema.safeParse(cantidadDecimal).success).toBe(false)
+  })
+})
+
+describe('crearPedidoRespuestaSchema', () => {
+  it('acepta la respuesta del POST: { pedido, total }', () => {
+    const { total, ...pedido } = pedidoPendiente
+    const respuesta = { pedido, total }
+    expect(crearPedidoRespuestaSchema.parse(respuesta)).toEqual(respuesta)
+  })
+
+  it('rechaza el formato plano del GET /pedidos/:id', () => {
+    expect(crearPedidoRespuestaSchema.safeParse(pedidoPendiente).success).toBe(false)
   })
 })
