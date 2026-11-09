@@ -1,7 +1,7 @@
 import { delay, http, HttpResponse } from 'msw'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { API_URL } from './api/config'
 import { server } from './mocks/server'
 import { CartProvider } from './cart/CartContext'
@@ -23,6 +23,23 @@ function renderApp() {
 }
 
 describe('App', () => {
+  beforeEach(() => {
+    window.history.pushState({}, '', '/')
+  })
+
+  it('muestra la mesa en el encabezado cuando viene en la URL', async () => {
+    window.history.pushState({}, '', '/?mesa=4')
+    renderApp()
+
+    expect(screen.getByRole('heading', { name: 'Mesa 4' })).toBeInTheDocument()
+  })
+
+  it('muestra retiro en la barra cuando la URL no tiene mesa', async () => {
+    renderApp()
+
+    expect(screen.getByRole('heading', { name: 'Retiro en la barra' })).toBeInTheDocument()
+  })
+
   it('muestra y actualiza cantidades y subtotales del carrito, y no permite confirmar vacío', async () => {
     server.use(
       http.get(`${API_URL}/productos`, () => HttpResponse.json([muffin])),
