@@ -25,6 +25,25 @@ describe('productoSchema', () => {
     expect(productoSchema.parse(expresoMediano)).toEqual(expresoMediano)
   })
 
+  it('acepta el formato de café que entrega la API', () => {
+    const cafeApi = {
+      id: 'c1',
+      tipo: 'expreso',
+      nombre: 'Expreso Pocillo Brasil',
+      precioBase: 2500,
+      precio: 5020,
+      gramos: 18,
+      precioPorGramo: 140,
+    }
+
+    expect(productoSchema.parse(cafeApi)).toEqual({
+      id: 'c1',
+      tipo: 'expreso',
+      nombre: 'Expreso Pocillo Brasil',
+      precio: 5020,
+    })
+  })
+
   it('acepta una pieza de pastelería sin tamaño ni variedad', () => {
     expect(productoSchema.parse(muffin)).toEqual(muffin)
   })
@@ -34,9 +53,9 @@ describe('productoSchema', () => {
     expect(productoSchema.parse(conExtras)).toEqual(expresoMediano)
   })
 
-  it('rechaza un café sin variedad', () => {
-    const sinVariedad = { ...expresoMediano, variedad: undefined }
-    expect(productoSchema.safeParse(sinVariedad).success).toBe(false)
+  it('rechaza un café sin precio', () => {
+    const sinPrecio = { ...expresoMediano, precio: undefined }
+    expect(productoSchema.safeParse(sinPrecio).success).toBe(false)
   })
 
   it('rechaza un tipo desconocido', () => {

@@ -9,8 +9,8 @@ const cafeSchema = z.object({
   id: z.string(),
   tipo: z.enum(['expreso', 'filtrado']),
   nombre: z.string(),
-  tamanio: z.string(),
-  variedad: variedadSchema,
+  tamanio: z.string().optional(),
+  variedad: variedadSchema.optional(),
   precio: z.number(),
 })
 
