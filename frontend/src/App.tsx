@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { obtenerProductos } from './api/client'
+import { crearPedido, obtenerProductos } from './api/client'
 import type { Producto } from './api/schemas'
 import { useCart } from './cart/CartContext'
+import { subtotalCarrito, subtotalItem } from './cart/carritoReducer'
 import {
   buscarCafe,
   obtenerDescripcionOrigen,
@@ -21,7 +22,10 @@ function App() {
   const [intento, setIntento] = useState(0)
   const [eleccion, setEleccion] = useState<EleccionCafe>({})
   const [mensajeAgregado, setMensajeAgregado] = useState('')
-  const { dispatch } = useCart()
+  const [pedidoEnviando, setPedidoEnviando] = useState(false)
+  const [mensajePedido, setMensajePedido] = useState('')
+  const [errorPedido, setErrorPedido] = useState('')
+  const { carrito, dispatch } = useCart()
 
   useEffect(() => {
     let vigente = true
@@ -89,6 +93,8 @@ function App() {
   function agregarProducto(producto: Producto) {
     dispatch({ type: 'agregar', producto })
     setMensajeAgregado(`${producto.nombre} se agregó al carrito`)
+    setMensajePedido('')
+    setErrorPedido('')
   }
 
   function agregarCafe() {
@@ -96,9 +102,91 @@ function App() {
     agregarProducto(cafeElegido)
   }
 
+  async function confirmarPedido() {
+    if (carrito.length === 0 || pedidoEnviando) return
+
+    setPedidoEnviando(true)
+    setMensajePedido('')
+    setErrorPedido('')
+    try {
+      const resultado = await crearPedido({
+        items: carrito.map(({ producto, cantidad }) => ({
+          productoId: producto.id,
+          cantidad,
+        })),
+      })
+      dispatch({ type: 'vaciar' })
+      setMensajePedido(
+        `Pedido ${resultado.pedido.id} confirmado. Total: ${formatearPrecio(resultado.total)}`,
+      )
+    } catch (error: unknown) {
+      setErrorPedido(
+        error instanceof Error ? error.message : 'No se pudo confirmar el pedido',
+      )
+    } finally {
+      setPedidoEnviando(false)
+    }
+  }
+
   return (
     <main className="container py-5">
       <h1 className="mb-4">Menú</h1>
+      <section aria-labelledby="titulo-carrito" className="mb-5">
+        <h2 id="titulo-carrito">Carrito</h2>
+        {carrito.length === 0 ? (
+          <p>Tu carrito está vacío.</p>
+        ) : (
+          <ul aria-label="Productos del carrito" className="list-unstyled">
+            {carrito.map(({ producto, cantidad }) => (
+              <li key={producto.id} className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span className="me-auto">{producto.nombre}</span>
+                <span>{formatearPrecio(subtotalItem({ producto, cantidad }))}</span>
+                <button
+                  type="button"
+                  className="btn btn-outline-primary btn-sm"
+                  aria-label={`Restar ${producto.nombre}`}
+                  disabled={pedidoEnviando}
+                  onClick={() => dispatch({ type: 'restar', productoId: producto.id })}
+                >
+                  −
+                </button>
+                <span aria-label={`Cantidad de ${producto.nombre}`}>{cantidad}</span>
+                <button
+                  type="button"
+                  className="btn btn-outline-primary btn-sm"
+                  aria-label={`Sumar ${producto.nombre}`}
+                  disabled={pedidoEnviando}
+                  onClick={() => dispatch({ type: 'sumar', productoId: producto.id })}
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-danger btn-sm"
+                  aria-label={`Quitar ${producto.nombre}`}
+                  disabled={pedidoEnviando}
+                  onClick={() => dispatch({ type: 'quitar', productoId: producto.id })}
+                >
+                  Quitar
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p>
+          <strong>Subtotal orientativo: {formatearPrecio(subtotalCarrito(carrito))}</strong>
+        </p>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={carrito.length === 0 || pedidoEnviando}
+          onClick={confirmarPedido}
+        >
+          {pedidoEnviando ? 'Confirmando…' : 'Confirmar pedido'}
+        </button>
+        {mensajePedido && <p role="status" className="mt-3">{mensajePedido}</p>}
+        {errorPedido && <p role="alert" className="mt-3">{errorPedido}</p>}
+      </section>
       {estado.estado === 'cargando' && (
         <p role="status" aria-live="polite">
           Cargando menú…
@@ -180,7 +268,7 @@ function App() {
                   <button
                     type="button"
                     className="btn btn-primary mt-2"
-                    disabled={!cafeElegido}
+                    disabled={!cafeElegido || pedidoEnviando}
                     onClick={agregarCafe}
                   >
                     Agregar al carrito
@@ -202,6 +290,7 @@ function App() {
                     <button
                       type="button"
                       className="btn btn-primary btn-sm ms-3"
+                      disabled={pedidoEnviando}
                       onClick={() => agregarProducto(producto)}
                     >
                       {`Agregar ${producto.nombre} al carrito`}

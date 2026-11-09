@@ -23,6 +23,70 @@ function renderApp() {
 }
 
 describe('App', () => {
+  it('muestra y actualiza cantidades y subtotales del carrito, y no permite confirmar vacío', async () => {
+    server.use(
+      http.get(`${API_URL}/productos`, () => HttpResponse.json([muffin])),
+    )
+    const user = userEvent.setup()
+    renderApp()
+
+    expect(await screen.findByText('Tu carrito está vacío.')).toBeInTheDocument()
+    const confirmar = screen.getByRole('button', { name: 'Confirmar pedido' })
+    expect(confirmar).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Agregar Muffin de chocolate al carrito' }))
+    expect(screen.getByText('Subtotal orientativo: $2.500')).toBeInTheDocument()
+    expect(confirmar).toBeEnabled()
+
+    await user.click(screen.getByRole('button', { name: 'Sumar Muffin de chocolate' }))
+    expect(screen.getByLabelText('Cantidad de Muffin de chocolate')).toHaveTextContent('2')
+    expect(screen.getByText('$5.000')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Restar Muffin de chocolate' }))
+    expect(screen.getByLabelText('Cantidad de Muffin de chocolate')).toHaveTextContent('1')
+    await user.click(screen.getByRole('button', { name: 'Quitar Muffin de chocolate' }))
+    expect(screen.getByText('Tu carrito está vacío.')).toBeInTheDocument()
+    expect(confirmar).toBeDisabled()
+  })
+
+  it('confirma el pedido y vacía el carrito solo al tener éxito', async () => {
+    server.use(
+      http.get(`${API_URL}/productos`, () => HttpResponse.json([muffin])),
+    )
+    const user = userEvent.setup()
+    renderApp()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Agregar Muffin de chocolate al carrito' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }))
+
+    expect(await screen.findByText(/Pedido pedido-1 confirmado\. Total: \$2\.500/))
+      .toBeInTheDocument()
+    expect(screen.getByText('Tu carrito está vacío.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Confirmar pedido' })).toBeDisabled()
+  })
+
+  it('conserva el carrito y muestra el error si falla la confirmación', async () => {
+    server.use(
+      http.get(`${API_URL}/productos`, () => HttpResponse.json([muffin])),
+      http.post(`${API_URL}/pedidos`, () =>
+        HttpResponse.json({ error: 'Servidor no disponible' }, { status: 503 }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderApp()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Agregar Muffin de chocolate al carrito' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Servidor no disponible')
+    expect(screen.getByText('Subtotal orientativo: $2.500')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Confirmar pedido' })).toBeEnabled()
+  })
+
   it('muestra un indicador mientras carga el menú y luego los productos', async () => {
     server.use(
       http.get(`${API_URL}/productos`, async () => {
