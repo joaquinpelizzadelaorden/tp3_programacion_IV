@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Producto } from '../api/schemas'
-import { buscarCafe } from './cafe'
+import type { Cafe } from './cafe'
+import { buscarCafe, obtenerDescripcionOrigen, obtenerOrigen, obtenerTamanio } from './cafe'
 
 const descripcion = 'Acidez media, cuerpo equilibrado y notas cítricas y florales'
 
@@ -67,5 +68,22 @@ describe('buscarCafe', () => {
     )
 
     expect(precios).toEqual([5020, 7360, undefined])
+  })
+})
+
+describe('datos del café desde el formato de la API', () => {
+  const cafeApi: Cafe = {
+    id: 'c1',
+    tipo: 'expreso',
+    nombre: 'Expreso Pocillo Brasil',
+    precio: 5020,
+  }
+
+  it('obtiene tamaño, origen y descripción a partir del nombre del producto', () => {
+    expect(obtenerTamanio(cafeApi)).toBe('Pocillo')
+    expect(obtenerOrigen(cafeApi)).toBe('Brasil')
+    expect(obtenerDescripcionOrigen(cafeApi)).toBe(
+      'Acidez baja, cuerpo denso y notas de chocolate y frutos secos',
+    )
   })
 })
