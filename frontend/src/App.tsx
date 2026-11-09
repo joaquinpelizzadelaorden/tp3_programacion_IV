@@ -1,33 +1,69 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useEffect, useState } from 'react'
+import { obtenerProductos } from './api/client'
+import type { Producto } from './api/schemas'
+
+type EstadoMenu =
+  | { estado: 'cargando' }
+  | { estado: 'error'; mensaje: string }
+  | { estado: 'listo'; productos: Producto[] }
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [estado, setEstado] = useState<EstadoMenu>({ estado: 'cargando' })
+  const [intento, setIntento] = useState(0)
+
+  useEffect(() => {
+    let vigente = true
+
+    obtenerProductos()
+      .then((productos) => {
+        if (vigente) setEstado({ estado: 'listo', productos })
+      })
+      .catch((error: unknown) => {
+        if (vigente) {
+          setEstado({
+            estado: 'error',
+            mensaje: error instanceof Error ? error.message : 'No se pudo cargar el menú',
+          })
+        }
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [intento])
+
+  function reintentar() {
+    setEstado({ estado: 'cargando' })
+    setIntento((actual) => actual + 1)
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
+    <main>
+      <h1>Menú</h1>
+      {estado.estado === 'cargando' && (
+        <p role="status" aria-live="polite">
+          Cargando menú…
         </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+      )}
+      {estado.estado === 'error' && (
+        <div role="alert">
+          <p>{estado.mensaje}</p>
+          <button type="button" onClick={reintentar}>
+            Reintentar
+          </button>
+        </div>
+      )}
+      {estado.estado === 'listo' && (
+        <ul aria-label="Productos del menú">
+          {estado.productos.map((producto) => (
+            <li key={producto.id}>
+              <span>{producto.nombre}</span>
+              <span>{` — $${producto.precio}`}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
   )
 }
 
