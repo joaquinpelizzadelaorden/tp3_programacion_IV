@@ -38,6 +38,12 @@ const pedidoBaseSchema = z.object({
 })
 
 export const pedidoSchema = pedidoBaseSchema.extend({ total: z.number() })
+export const crearPedidoRespuestaSchema = z.object({
+  pedido: pedidoBaseSchema,
+  total: z.number(),
+})
+
 export type Producto = z.infer<typeof productoSchema>
 export type ErrorApi = z.infer<typeof errorSchema>
 export type Pedido = z.infer<typeof pedidoSchema>
+export type CrearPedidoRespuesta = z.infer<typeof crearPedidoRespuestaSchema>
