@@ -215,7 +215,11 @@ function App() {
               <div className="row g-4">
                 <section className="col-12 col-md-4" aria-labelledby="paso-bebida">
                   <h3 id="paso-bebida" className="h5">1. Elegí tu bebida</h3>
-                  <div className="d-flex flex-wrap gap-2">
+                  <div
+                    role="group"
+                    aria-labelledby="paso-bebida"
+                    className="d-flex flex-wrap gap-2"
+                  >
                     {bebidas.map((bebida) => (
                       <button
                         key={bebida}
@@ -232,7 +236,11 @@ function App() {
 
                 <section className="col-12 col-md-4" aria-labelledby="paso-tamanio">
                   <h3 id="paso-tamanio" className="h5">2. Elegí el tamaño</h3>
-                  <div className="d-flex flex-wrap gap-2">
+                  <div
+                    role="group"
+                    aria-labelledby="paso-tamanio"
+                    className="d-flex flex-wrap gap-2"
+                  >
                     {tamanios.map((tamanio) => (
                       <button
                         key={tamanio}
@@ -249,7 +257,11 @@ function App() {
 
                 <section className="col-12 col-md-4" aria-labelledby="paso-origen">
                   <h3 id="paso-origen" className="h5">3. Elegí el origen</h3>
-                  <div className="d-flex flex-column gap-2">
+                  <div
+                    role="group"
+                    aria-labelledby="paso-origen"
+                    className="d-flex flex-column gap-2"
+                  >
                     {origenes.map((cafe) => {
                       const origen = obtenerOrigen(cafe)
                       if (!origen) return null

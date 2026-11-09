@@ -210,6 +210,9 @@ describe('App', () => {
 
     const addButton = await screen.findByRole('button', { name: 'Agregar al carrito' })
     expect(addButton).toBeDisabled()
+    expect(screen.getByRole('group', { name: '1. Elegí tu bebida' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: '2. Elegí el tamaño' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: '3. Elegí el origen' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Expreso' }))
     expect(addButton).toBeDisabled()
@@ -226,5 +229,8 @@ describe('App', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'Expreso Pocillo Colombia se agregó al carrito',
     )
+    screen.getAllByRole('button').forEach((button) => {
+      expect(button).toHaveAccessibleName()
+    })
   })
 })
