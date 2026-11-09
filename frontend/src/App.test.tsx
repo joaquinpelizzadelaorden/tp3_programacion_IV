@@ -37,6 +37,39 @@ describe('App', () => {
     expect(screen.getByLabelText('Productos del menú')).toBeInTheDocument()
   })
 
+  it('muestra los precios de pastelería y permite agregar cada producto al carrito', async () => {
+    server.use(
+      http.get(`${API_URL}/productos`, () =>
+        HttpResponse.json([
+          muffin,
+          {
+            id: 'p2',
+            tipo: 'pasteleria',
+            nombre: 'Torta selva negra',
+            precio: 4200,
+          },
+        ]),
+      ),
+    )
+    const user = userEvent.setup()
+    renderApp()
+
+    expect(await screen.findByRole('heading', { name: 'Pastelería' })).toBeInTheDocument()
+    expect(screen.getByText('Muffin de chocolate')).toBeInTheDocument()
+    expect(screen.getByText(/\$2\.500/)).toBeInTheDocument()
+    expect(screen.getByText('Torta selva negra')).toBeInTheDocument()
+    expect(screen.getByText(/\$4\.200/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Agregar Muffin de chocolate al carrito' }))
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Muffin de chocolate se agregó al carrito',
+    )
+    await user.click(screen.getByRole('button', { name: 'Agregar Torta selva negra al carrito' }))
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Torta selva negra se agregó al carrito',
+    )
+  })
+
   it('muestra el error y permite reintentar la carga', async () => {
     let intentos = 0
     server.use(

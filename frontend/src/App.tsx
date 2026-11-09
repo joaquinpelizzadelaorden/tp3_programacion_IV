@@ -86,10 +86,14 @@ function App() {
     setMensajeAgregado('')
   }
 
+  function agregarProducto(producto: Producto) {
+    dispatch({ type: 'agregar', producto })
+    setMensajeAgregado(`${producto.nombre} se agregó al carrito`)
+  }
+
   function agregarCafe() {
     if (!cafeElegido) return
-    dispatch({ type: 'agregar', producto: cafeElegido })
-    setMensajeAgregado(`${cafeElegido.nombre} se agregó al carrito`)
+    agregarProducto(cafeElegido)
   }
 
   return (
@@ -181,13 +185,13 @@ function App() {
                   >
                     Agregar al carrito
                   </button>
-                  {mensajeAgregado && <p role="status" className="mt-2">{mensajeAgregado}</p>}
                 </section>
               </div>
             </section>
           )}
-          <section aria-labelledby="acompanamientos">
-            <h2 id="acompanamientos">Para acompañar</h2>
+          {mensajeAgregado && <p role="status" className="mb-3">{mensajeAgregado}</p>}
+          <section aria-labelledby="pasteleria">
+            <h2 id="pasteleria">Pastelería</h2>
             <ul aria-label="Productos del menú">
               {estado.productos
                 .filter((producto) => producto.tipo === 'pasteleria')
@@ -195,6 +199,13 @@ function App() {
                   <li key={producto.id}>
                     <span>{producto.nombre}</span>
                     <span>{` — ${formatearPrecio(producto.precio)}`}</span>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm ms-3"
+                      onClick={() => agregarProducto(producto)}
+                    >
+                      {`Agregar ${producto.nombre} al carrito`}
+                    </button>
                   </li>
                 ))}
             </ul>
