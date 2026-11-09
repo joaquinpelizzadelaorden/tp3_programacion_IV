@@ -10,6 +10,7 @@ import {
   obtenerTamanio,
 } from './lib/cafe'
 import type { Bebida, Cafe, EleccionCafe } from './lib/cafe'
+import { leerMesa } from './lib/mesa'
 import { formatearPrecio } from './lib/precio'
 
 type EstadoMenu =
@@ -26,6 +27,8 @@ function App() {
   const [mensajePedido, setMensajePedido] = useState('')
   const [errorPedido, setErrorPedido] = useState('')
   const { carrito, dispatch } = useCart()
+  const mesa = leerMesa(window.location.search)
+  const tituloPedido = mesa === null ? 'Retiro en la barra' : `Mesa ${mesa}`
 
   useEffect(() => {
     let vigente = true
@@ -130,7 +133,11 @@ function App() {
 
   return (
     <main className="container py-5">
-      <h1 className="mb-4">Menú</h1>
+      <header className="mb-4">
+        <p className="text-uppercase small text-muted mb-1">Pedido</p>
+        <h1>{tituloPedido}</h1>
+      </header>
+      <h2 className="mb-4">Menú</h2>
       <section aria-labelledby="titulo-carrito" className="mb-5">
         <h2 id="titulo-carrito">Carrito</h2>
         {carrito.length === 0 ? (
