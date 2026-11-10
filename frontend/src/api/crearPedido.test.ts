@@ -28,7 +28,11 @@ describe('crearPedido', () => {
 
     const resultado = await crearPedido({ mesaId: 'mesa-4', items })
 
-    expect(cuerpo).toEqual({ mesaId: 'mesa-4', items })
+    expect(cuerpo).toMatchObject({
+      id: expect.stringMatching(/^pedido-/),
+      mesaId: 'mesa-4',
+      items,
+    })
     expect(resultado.total).toBe(17220)
     expect(resultado.pedido.estado).toBe('pendiente')
   })
@@ -47,7 +51,7 @@ describe('crearPedido', () => {
 
     await crearPedido({ items })
 
-    expect(cuerpo).toEqual({ items })
+    expect(cuerpo).toMatchObject({ id: expect.stringMatching(/^pedido-/), items })
   })
 
   it('lanza el mensaje que devuelve la API cuando rechaza el pedido', async () => {
