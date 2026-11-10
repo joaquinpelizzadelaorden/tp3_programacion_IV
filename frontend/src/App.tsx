@@ -119,7 +119,8 @@ function App() {
           cantidad,
         })),
       })
-      // NOTA: Eliminamos dispatch({ type: 'vaciar' }) de aquí temporalmente
+      // FASE VERDE: El carrito solo se vacía si la API responde con éxito
+      dispatch({ type: 'vaciar' })
       setMensajePedido(
         `Pedido ${resultado.pedido.id} confirmado. Total: ${formatearPrecio(resultado.total)}`,
       )
@@ -129,8 +130,6 @@ function App() {
       )
     } finally {
       setPedidoEnviando(false)
-      // TDD FASE ROJA: Forzamos el vaciado del carrito siempre, incluso si hay error
-      dispatch({ type: 'vaciar' }) 
     }
   }
 
