@@ -1,76 +1,147 @@
-import type { ZodType } from 'zod'
-import { API_URL } from './config'
-import {
-  crearPedidoRespuestaSchema,
-  errorSchema,
-  pedidoSchema,
-  productosSchema,
-} from './schemas'
-import type { CrearPedidoRespuesta, Pedido, Producto } from './schemas'
+# Cafetería Origen — Menú digital y API de pedidos
 
-export type NuevoPedido = {
-  id?: string
-  mesaId?: string
-  items: { productoId: string; cantidad: number }[]
-}
+Este repositorio contiene la API REST de Cafetería Origen y un menú web para que los clientes consulten productos y envíen pedidos desde su mesa. El frontend consume la API del proyecto; en las pruebas de interfaz se usan MSW y Playwright.
 
-export class ApiError extends Error {
-  readonly status: number | null
+## Características Técnicas
 
-  constructor(mensaje: string, status: number | null = null) {
-    super(mensaje)
-    this.name = 'ApiError'
-    this.status = status
-  }
-}
+El desarrollo se basó en los siguientes pilares:
 
-async function pedir<T>(ruta: string, esquema: ZodType<T>, init?: RequestInit): Promise<T> {
-  let respuesta: Response
-  try {
-    respuesta = await fetch(`${API_URL}${ruta}`, init)
-  } catch {
-    throw new ApiError('No se pudo conectar con el servidor')
-  }
+- **POO**:
+  - **Abstracción**: Se definió una clase abstracta `Producto` para establecer la estructura común.
+  - **Polimorfismo**: Implementación de `calcularPrecio()` mediante `override` en las clases `Cafe` y `Pasteleria`.
+  - **Encapsulamiento**: Uso de atributos privados con acceso a través de getters y setters.
+  - **Agregación**: El `Pedido` contiene una lista de productos independientes.
+- **TypeScript**: Configuración en modo `strict` para garantizar la seguridad de tipos y evitar errores en tiempo de ejecución.
+- **Testing**: Suite de pruebas con **Vitest**, incluyendo tests unitarios para los cálculos de precios y tests de integración con mocks para los endpoints de la API.
 
-  let cuerpo: unknown
-  try {
-    cuerpo = await respuesta.json()
-  } catch {
-    cuerpo = undefined
-  }
+## Tecnologías
 
-  if (!respuesta.ok) {
-    const error = errorSchema.safeParse(cuerpo)
-    const mensaje = error.success
-      ? error.data.error
-      : `El servidor respondió con el error ${respuesta.status}`
-    throw new ApiError(mensaje, respuesta.status)
-  }
+- **API**: TypeScript, Node.js y Express.
+- **Frontend**: React, TypeScript, Vite, Bootstrap y SASS.
+- **Tests**: Vitest, React Testing Library, MSW y Playwright.
+- **Contenedores**: Docker (opcional).
 
-  const resultado = esquema.safeParse(cuerpo)
-  if (!resultado.success) {
-    throw new ApiError('La respuesta del servidor no cumple el contrato esperado', respuesta.status)
-  }
-  return resultado.data
-}
+## Instalación y ejecución local
 
-export function obtenerProductos(): Promise<Producto[]> {
-  return pedir('/productos', productosSchema)
-}
+### Requisitos
 
-export function obtenerPedido(id: string): Promise<Pedido> {
-  return pedir(`/pedidos/${encodeURIComponent(id)}`, pedidoSchema)
-}
+- Node.js 20.19+ o 22.12+ (requisito de Vite 7).
+- npm.
+- Docker es opcional; solo se necesita para ejecutar la API en un contenedor.
 
-export function crearPedido(pedido: NuevoPedido): Promise<CrearPedidoRespuesta> {
-  const pedidoConId = {
-    ...pedido,
-    id: pedido.id ?? `pedido-${crypto.randomUUID()}`,
-  }
+En PowerShell, mirá la ruta que aparece antes de `>` en el prompt. Si termina en `\frontend>`, ya estás dentro de `frontend/`: no vuelvas a ejecutar `cd frontend`. Para regresar a la raíz del repositorio, usá `cd ..`.
 
-  return pedir('/pedidos', crearPedidoRespuestaSchema, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(pedidoConId),
-  })
-}
+### Instalar dependencias
+
+Los dos `package.json` tienen sus propios lockfiles. Instalá las dependencias por separado:
+
+Desde la **raíz del repositorio**:
+
+```bash
+npm ci
+```
+
+Desde la **raíz del repositorio**, instalá también las dependencias del frontend:
+
+```bash
+cd frontend
+npm ci
+```
+
+### Levantar la aplicación
+
+Usá dos terminales. La API y el frontend deben estar ejecutándose al mismo tiempo para usar la aplicación manualmente.
+
+Terminal 1, desde la **raíz del repositorio**. Si esta terminal quedó en `frontend/` después de instalar las dependencias, primero ejecutá `cd ..` para volver a la raíz. Luego iniciá la API:
+
+```bash
+npm start
+```
+
+La API queda disponible en `http://localhost:3000`.
+
+Terminal 2, desde la **raíz del repositorio**:
+
+```bash
+cd frontend
+npm run dev
+```
+
+El menú queda disponible en `http://localhost:5173`. Para probar la mesa 4, abrí `http://localhost:5173/?mesa=4`. Sin mesa válida, el pedido se prepara para retirar en la barra.
+
+## Ejecutar las pruebas
+
+### API
+
+Desde la **raíz del repositorio**:
+
+```bash
+npm test
+```
+
+Ejecuta los tests de la API en `tests/`. No requiere iniciar el servidor.
+
+### Frontend: unitarios, componentes e integración
+
+Desde la **raíz del repositorio**:
+
+```bash
+cd frontend
+npm test
+npm run lint
+npm run build
+```
+
+Vitest y MSW ejecutan unitarios, componentes e integración sin levantar la API. Los otros dos comandos comprueban estilo y tipos y generan el build de producción.
+
+### E2E con Playwright
+
+Las pruebas E2E usan el frontend y la API reales. Playwright inicia ambos servidores automáticamente; no los inicies manualmente para esta prueba. La API corre con `NODE_ENV=test`, que es el único entorno donde están habilitados `/__test__/reset` y `/__test__/seed`. Los puertos `3000` y `5173` deben estar disponibles.
+
+Instalá Chromium **una vez** y ejecutá E2E desde la **raíz del repositorio**:
+
+```bash
+cd frontend
+npx playwright install chromium
+npm run test:e2e
+```
+
+En Linux, si faltan bibliotecas del sistema, reemplazá el comando de instalación de Chromium por:
+
+```bash
+npx playwright install --with-deps chromium
+```
+
+Playwright restaura los datos con `reset` y `seed` antes de cada caso. Para abrir el modo interactivo:
+
+```bash
+cd frontend
+npm run test:e2e:ui
+```
+
+### CORS
+
+La API permite por defecto solicitudes desde `http://localhost:5173` (el puerto predeterminado de Vite). Para autorizar otros orígenes, como una lista de orígenes separados por comas, por ejemplo:
+
+```env
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174
+```
+
+La variable también se puede configurar en el entorno del servidor.
+
+### Ejecución con Docker
+
+1. **Construir la imagen**:
+
+   ```bash
+   docker build -t cafeteria-origen .
+   ```
+
+2. **Ejecutar el contenedor**:
+
+   ```bash
+   docker run -p 3000:3000 cafeteria-origen
+   ```
+
+La API expone un contrato JSON con base en `http://localhost:3000` y responde siempre con contenido `application/json` salvo la ruta raíz, que devuelve texto plano.
+
