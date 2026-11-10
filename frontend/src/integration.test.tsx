@@ -112,6 +112,6 @@ describe('Fase 7: Tests de Integración', () => {
     )
 
     // Verificamos que se muestre el alerta con el mensaje de error de red
-    expect(await screen.findByRole('alert')).toHaveTextContent('Servidor OK')
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor')
   })
 })
