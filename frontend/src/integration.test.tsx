@@ -1,11 +1,11 @@
 import { http, HttpResponse, delay } from 'msw'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
 import { API_URL } from './api/config'
 import { server } from './mocks/server'
 import { CartProvider } from './cart/CartContext'
 import App from './App'
-import userEvent from '@testing-library/user-event'
 
 describe('Fase 7: Tests de Integración', () => {
   it('1. Carga del menú: muestra indicador de carga y luego los productos', async () => {
@@ -65,11 +65,10 @@ describe('Fase 7: Tests de Integración', () => {
     // Esperamos el mensaje de éxito de la API
     expect(await screen.findByText(/confirmado/i)).toBeInTheDocument()
 
-    // Validamos el contrato enviado (FALLA ACÁ PORQUE FALTA MESA)
+    // Validamos el contrato enviado
     expect(requestBody).toEqual({
       mesaId: 'mesa-4',
       items: [{ productoId: 'p1', cantidad: 1 }]
     })
   })
-
 })
