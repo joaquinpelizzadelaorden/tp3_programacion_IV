@@ -99,4 +99,19 @@ describe('Fase 7: Tests de Integración', () => {
     // Verificamos que el producto siga en el carrito (el subtotal sigue estando)
     expect(screen.getByText('Subtotal orientativo: $2.500')).toBeInTheDocument()
   })
+  it('4. API caída (Network Error): muestra mensaje de error de conexión', async () => {
+    server.use(
+      // HttpResponse.error() simula una caída total de red (sin respuesta HTTP)
+      http.get(`${API_URL}/productos`, () => HttpResponse.error())
+    )
+
+    render(
+      <CartProvider>
+        <App />
+      </CartProvider>
+    )
+
+    // Verificamos que se muestre el alerta con el mensaje de error de red
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor')
+  })
 })
