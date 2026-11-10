@@ -71,4 +71,32 @@ describe('Fase 7: Tests de Integración', () => {
       items: [{ productoId: 'p1', cantidad: 1 }]
     })
   })
+  it('3. Error 4xx que conserva el carrito y muestra el mensaje', async () => {
+    server.use(
+      http.get(`${API_URL}/productos`, () => HttpResponse.json([
+        { id: 'p1', tipo: 'pasteleria', nombre: 'Muffin de chocolate', precio: 2500 }
+      ])),
+      // Simulamos que la API rechaza el pedido con un status 400
+      http.post(`${API_URL}/pedidos`, () => {
+        return HttpResponse.json({ error: 'No hay stock suficiente' }, { status: 400 })
+      })
+    )
+
+    const user = userEvent.setup()
+    render(
+      <CartProvider>
+        <App />
+      </CartProvider>
+    )
+
+    // Agregamos un producto y confirmamos
+    await user.click(await screen.findByRole('button', { name: /agregar muffin/i }))
+    await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
+
+    // Verificamos que se muestre el error devuelto por la API
+    expect(await screen.findByRole('alert')).toHaveTextContent('No hay stock suficiente')
+
+    // Verificamos que el producto siga en el carrito (el subtotal sigue estando)
+    expect(screen.getByText('Subtotal orientativo: $2.500')).toBeInTheDocument()
+  })
 })
