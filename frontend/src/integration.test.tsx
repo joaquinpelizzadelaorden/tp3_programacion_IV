@@ -35,7 +35,11 @@ describe('Fase 7: Tests de Integración', () => {
     // Simulamos que escaneó el QR de la mesa 4
     window.history.pushState({}, '', '/?mesa=4')
     
-    let requestBody: any = null
+    let requestBody: {
+      id: string
+      mesaId?: string
+      items: { productoId: string; cantidad: number }[]
+    } | null = null
     
     server.use(
       http.get(`${API_URL}/productos`, () => HttpResponse.json([
@@ -43,9 +47,10 @@ describe('Fase 7: Tests de Integración', () => {
       ])),
       http.post(`${API_URL}/pedidos`, async ({ request }) => {
         // Guardamos el body que mandó el frontend
-        requestBody = await request.json()
+        const body = await request.json() as NonNullable<typeof requestBody>
+        requestBody = body
         return HttpResponse.json({ 
-          pedido: { id: 'pedido-123', estado: 'pendiente', mesaId: 'mesa-4', items: requestBody.items }, 
+          pedido: { id: 'pedido-123', estado: 'pendiente', mesaId: 'mesa-4', items: body.items },
           total: 2500 
         }, { status: 201 })
       })
@@ -66,7 +71,8 @@ describe('Fase 7: Tests de Integración', () => {
     expect(await screen.findByText(/confirmado/i)).toBeInTheDocument()
 
     // Validamos el contrato enviado
-    expect(requestBody).toEqual({
+    expect(requestBody).toMatchObject({
+      id: expect.stringMatching(/^pedido-/),
       mesaId: 'mesa-4',
       items: [{ productoId: 'p1', cantidad: 1 }]
     })

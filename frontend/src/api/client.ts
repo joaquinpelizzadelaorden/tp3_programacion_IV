@@ -63,9 +63,14 @@ export function obtenerPedido(id: string): Promise<Pedido> {
 }
 
 export function crearPedido(pedido: NuevoPedido): Promise<CrearPedidoRespuesta> {
+  const pedidoConId = {
+    ...pedido,
+    id: pedido.id ?? `pedido-${crypto.randomUUID()}`,
+  }
+
   return pedir('/pedidos', crearPedidoRespuestaSchema, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(pedido),
+    body: JSON.stringify(pedidoConId),
   })
 }

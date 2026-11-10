@@ -12,6 +12,7 @@ import {
 import type { Bebida, Cafe, EleccionCafe } from './lib/cafe'
 import { leerMesa } from './lib/mesa'
 import { formatearPrecio } from './lib/precio'
+import { SeguimientoPedido } from './pedido/SeguimientoPedido'
 
 type EstadoMenu =
   | { estado: 'cargando' }
@@ -24,7 +25,9 @@ function App() {
   const [eleccion, setEleccion] = useState<EleccionCafe>({})
   const [mensajeAgregado, setMensajeAgregado] = useState('')
   const [pedidoEnviando, setPedidoEnviando] = useState(false)
-  const [mensajePedido, setMensajePedido] = useState('')
+  const [pedidoConfirmado, setPedidoConfirmado] = useState<
+    Awaited<ReturnType<typeof crearPedido>> | null
+  >(null)
   const [errorPedido, setErrorPedido] = useState('')
   const { carrito, dispatch } = useCart()
   const mesa = leerMesa(window.location.search)
@@ -96,7 +99,7 @@ function App() {
   function agregarProducto(producto: Producto) {
     dispatch({ type: 'agregar', producto })
     setMensajeAgregado(`${producto.nombre} se agregó al carrito`)
-    setMensajePedido('')
+    setPedidoConfirmado(null)
     setErrorPedido('')
   }
 
@@ -109,7 +112,7 @@ function App() {
     if (carrito.length === 0 || pedidoEnviando) return
 
     setPedidoEnviando(true)
-    setMensajePedido('')
+    setPedidoConfirmado(null)
     setErrorPedido('')
     try {
       const resultado = await crearPedido({
@@ -121,9 +124,8 @@ function App() {
       })
       // FASE VERDE: El carrito solo se vacía si la API responde con éxito
       dispatch({ type: 'vaciar' })
-      setMensajePedido(
-        `Pedido ${resultado.pedido.id} confirmado. Total: ${formatearPrecio(resultado.total)}`,
-      )
+      setMensajeAgregado('')
+      setPedidoConfirmado(resultado)
     } catch (error: unknown) {
       setErrorPedido(
         error instanceof Error ? error.message : 'No se pudo confirmar el pedido',
@@ -193,7 +195,29 @@ function App() {
         >
           {pedidoEnviando ? 'Confirmando…' : 'Confirmar pedido'}
         </button>
-        {mensajePedido && <p role="status" className="mt-3">{mensajePedido}</p>}
+        {pedidoConfirmado && (
+          <section aria-labelledby="pedido-confirmado" className="mt-4">
+            <h2 id="pedido-confirmado">¡Pedido confirmado!</h2>
+            <p>Número de pedido: {pedidoConfirmado.pedido.id}</p>
+            <p>Total: {formatearPrecio(pedidoConfirmado.total)}</p>
+            <ul aria-label="Productos del pedido">
+              {pedidoConfirmado.pedido.items.map((item) => {
+                const producto = estado.estado === 'listo'
+                  ? estado.productos.find((candidato) => candidato.id === item.productoId)
+                  : undefined
+                return (
+                  <li key={item.productoId}>
+                    {producto?.nombre ?? item.productoId} × {item.cantidad}
+                  </li>
+                )
+              })}
+            </ul>
+            <SeguimientoPedido
+              pedidoId={pedidoConfirmado.pedido.id}
+              estadoInicial={pedidoConfirmado.pedido.estado}
+            />
+          </section>
+        )}
         {errorPedido && <p role="alert" className="mt-3">{errorPedido}</p>}
       </section>
       {estado.estado === 'cargando' && (

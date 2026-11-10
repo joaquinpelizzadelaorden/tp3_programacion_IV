@@ -110,7 +110,10 @@ describe('crearPedido', () => {
 
     const respuesta = await crearPedido(nuevo)
 
-    expect(cuerpo).toEqual(nuevo)
+    expect(cuerpo).toMatchObject({
+      ...nuevo,
+      id: expect.stringMatching(/^pedido-/),
+    })
     expect(tipoContenido).toBe('application/json')
     expect(respuesta).toEqual({ pedido, total: 2500 })
   })
