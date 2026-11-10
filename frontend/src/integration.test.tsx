@@ -152,8 +152,8 @@ describe('Fase 7: Tests de Integración', () => {
       </CartProvider>
     )
 
-    // Ponemos a propósito un texto falso para forzar el fallo (Rojo)
-    expect(await screen.findByRole('alert')).toHaveTextContent('Texto falso que no existe')
+    
+    expect(await screen.findByRole('alert')).toHaveTextContent('Error interno del servidor')
     
     const botonReintentar = screen.getByRole('button', { name: /reintentar/i })
     await user.click(botonReintentar)
