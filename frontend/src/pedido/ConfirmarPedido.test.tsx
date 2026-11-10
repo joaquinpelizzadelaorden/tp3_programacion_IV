@@ -190,4 +190,23 @@ describe('ConfirmarPedido', () => {
     expect(await screen.findByText(/pedido-7/)).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
+    it('tras confirmar permite consultar el estado del pedido sin recargar', async () => {
+    server.use(
+      http.post(`${API_URL}/pedidos`, () => HttpResponse.json(respuestaApi, { status: 201 })),
+      http.get(`${API_URL}/pedidos/pedido-7`, () =>
+        HttpResponse.json({
+          id: 'pedido-7',
+          estado: 'listo',
+          items: respuestaApi.pedido.items,
+          total: 17220,
+        }),
+      ),
+    )
+    const user = await renderizarConDosExpresos('mesa-4')
+
+    await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
+    await user.click(await screen.findByRole('button', { name: /actualizar estado/i }))
+
+    expect(await screen.findByText(/listo/i)).toBeInTheDocument()
+  })
 })
