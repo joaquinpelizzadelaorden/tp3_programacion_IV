@@ -114,4 +114,21 @@ describe('Fase 7: Tests de Integración', () => {
     // Verificamos que se muestre el alerta con el mensaje de error de red
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor')
   })
+  it('5. Respuesta que no cumple el contrato (Zod): muestra error si el backend responde mal', async () => {
+    server.use(
+      // Devolvemos un producto que no cumple con el esquema (le falta el precio requerido)
+      http.get(`${API_URL}/productos`, () => HttpResponse.json([
+        { id: 'p1', tipo: 'pasteleria', nombre: 'Muffin sin precio' }
+      ]))
+    )
+
+    render(
+      <CartProvider>
+        <App />
+      </CartProvider>
+    )
+
+    // Verificamos que se muestre el alerta informando que la respuesta no cumple el contrato
+    expect(await screen.findByRole('alert')).toHaveTextContent(/la respuesta del servidor no cumple el contrato esperado/i)
+  })
 })
