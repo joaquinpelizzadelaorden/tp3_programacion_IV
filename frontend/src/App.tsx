@@ -30,7 +30,7 @@ function App() {
   const mesa = leerMesa(window.location.search)
   const tituloPedido = mesa === null ? 'Retiro en la barra' : `Mesa ${mesa}`
 
-   useEffect(() => {
+  useEffect(() => {
     let vigente = true
 
     obtenerProductos()
@@ -113,12 +113,13 @@ function App() {
     setErrorPedido('')
     try {
       const resultado = await crearPedido({
+        mesaId: mesa ? `mesa-${mesa}` : undefined,
         items: carrito.map(({ producto, cantidad }) => ({
           productoId: producto.id,
           cantidad,
         })),
       })
-      dispatch({ type: 'vaciar' })
+      // NOTA: Eliminamos dispatch({ type: 'vaciar' }) de aquí temporalmente
       setMensajePedido(
         `Pedido ${resultado.pedido.id} confirmado. Total: ${formatearPrecio(resultado.total)}`,
       )
@@ -128,6 +129,8 @@ function App() {
       )
     } finally {
       setPedidoEnviando(false)
+      // TDD FASE ROJA: Forzamos el vaciado del carrito siempre, incluso si hay error
+      dispatch({ type: 'vaciar' }) 
     }
   }
 
