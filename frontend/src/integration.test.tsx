@@ -129,6 +129,6 @@ describe('Fase 7: Tests de Integración', () => {
     )
 
     // Verificamos que se muestre el alerta informando que la respuesta no cumple el contrato
-    expect(await screen.findByRole('alert')).toHaveTextContent('Todo OK')
+    expect(await screen.findByRole('alert')).toHaveTextContent(/la respuesta del servidor no cumple el contrato esperado/i)
   })
 })
