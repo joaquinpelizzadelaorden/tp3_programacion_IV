@@ -83,7 +83,11 @@ describe('ConfirmarPedido', () => {
     await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
     await screen.findByText(/pedido-7/)
 
-    expect(cuerpo).toEqual({ mesaId: 'mesa-4', items: [{ productoId: 'c5', cantidad: 2 }] })
+    expect(cuerpo).toMatchObject({
+      id: expect.stringMatching(/^pedido-/),
+      mesaId: 'mesa-4',
+      items: [{ productoId: 'c5', cantidad: 2 }],
+    })
   })
 
   it('sin mesa (retiro en barra) no envía mesaId', async () => {
@@ -99,7 +103,10 @@ describe('ConfirmarPedido', () => {
     await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
     await screen.findByText(/pedido-7/)
 
-    expect(cuerpo).toEqual({ items: [{ productoId: 'c5', cantidad: 2 }] })
+    expect(cuerpo).toMatchObject({
+      id: expect.stringMatching(/^pedido-/),
+      items: [{ productoId: 'c5', cantidad: 2 }],
+    })
   })
 
   it('muestra número, estado y el total que devolvió la API, no el del carrito', async () => {
