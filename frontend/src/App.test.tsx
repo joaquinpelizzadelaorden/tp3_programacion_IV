@@ -78,9 +78,17 @@ describe('App', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Confirmar pedido' }))
 
-    expect(await screen.findByText(/Pedido pedido-1 confirmado\. Total: \$2\.500/))
+    expect(await screen.findByRole('heading', { name: '¡Pedido confirmado!' }))
       .toBeInTheDocument()
+    expect(screen.getByText(/^Número de pedido: pedido-/)).toBeInTheDocument()
+    expect(screen.getByText('Estado: pendiente')).toBeInTheDocument()
+    expect(screen.getByText('Total: $2.500')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Productos del pedido' }))
+      .toHaveTextContent('Muffin de chocolate')
+    expect(screen.getByRole('button', { name: 'Actualizar estado' })).toBeEnabled()
     expect(screen.getByText('Tu carrito está vacío.')).toBeInTheDocument()
+    expect(screen.queryByText('Muffin de chocolate se agregó al carrito'))
+      .not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirmar pedido' })).toBeDisabled()
   })
 
