@@ -30,7 +30,7 @@ function App() {
   const mesa = leerMesa(window.location.search)
   const tituloPedido = mesa === null ? 'Retiro en la barra' : `Mesa ${mesa}`
 
-  useEffect(() => {
+   useEffect(() => {
     let vigente = true
 
     obtenerProductos()
