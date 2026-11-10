@@ -131,4 +131,33 @@ describe('Fase 7: Tests de Integración', () => {
     // Verificamos que se muestre el alerta informando que la respuesta no cumple el contrato
     expect(await screen.findByRole('alert')).toHaveTextContent(/la respuesta del servidor no cumple el contrato esperado/i)
   })
+  it('6. Error 500 con reintento: muestra error al fallar y recupera al reintentar', async () => {
+    let intentos = 0
+    server.use(
+      http.get(`${API_URL}/productos`, () => {
+        intentos += 1
+        if (intentos === 1) {
+          return HttpResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+        }
+        return HttpResponse.json([
+          { id: 'p1', tipo: 'pasteleria', nombre: 'Muffin de chocolate', precio: 2500 }
+        ])
+      })
+    )
+
+    const user = userEvent.setup()
+    render(
+      <CartProvider>
+        <App />
+      </CartProvider>
+    )
+
+    // Ponemos a propósito un texto falso para forzar el fallo (Rojo)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Texto falso que no existe')
+    
+    const botonReintentar = screen.getByRole('button', { name: /reintentar/i })
+    await user.click(botonReintentar)
+
+    expect(await screen.findByText('Muffin de chocolate')).toBeInTheDocument()
+  })
 })
