@@ -139,4 +139,74 @@ describe('ConfirmarPedido', () => {
 
     expect(screen.getByText('Líneas en el carrito: 0')).toBeInTheDocument()
   })
+    it('si la API rechaza el pedido, muestra su mensaje tal cual', async () => {
+    server.use(
+      http.post(`${API_URL}/pedidos`, () =>
+        HttpResponse.json({ error: 'mesaId debe tener el formato mesa-<número>' }, { status: 400 }),
+      ),
+    )
+    const user = await renderizarConDosExpresos('mesa-xyz')
+
+    await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'mesaId debe tener el formato mesa-<número>',
+    )
+  })
+
+  it('si la API rechaza el pedido, el carrito no se pierde', async () => {
+    server.use(
+      http.post(`${API_URL}/pedidos`, () =>
+        HttpResponse.json({ error: 'El producto no existe: c5' }, { status: 404 }),
+      ),
+    )
+    const user = await renderizarConDosExpresos('mesa-4')
+
+    await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
+    await screen.findByRole('alert')
+
+    expect(screen.getByText('Líneas en el carrito: 1')).toBeInTheDocument()
+    expect(screen.queryByText(/pedido confirmado/i)).not.toBeInTheDocument()
+  })
+
+  it('tras un error se puede reintentar y el pedido se confirma', async () => {
+    let intentos = 0
+    server.use(
+      http.post(`${API_URL}/pedidos`, () => {
+        intentos += 1
+        return intentos === 1
+          ? HttpResponse.json({ error: 'Intentá de nuevo en un momento' }, { status: 400 })
+          : HttpResponse.json(respuestaApi, { status: 201 })
+      }),
+    )
+    const user = await renderizarConDosExpresos('mesa-4')
+
+    await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /confirmar pedido/i })).toBeEnabled()
+
+    await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
+
+    expect(await screen.findByText(/pedido-7/)).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+    it('tras confirmar permite consultar el estado del pedido sin recargar', async () => {
+    server.use(
+      http.post(`${API_URL}/pedidos`, () => HttpResponse.json(respuestaApi, { status: 201 })),
+      http.get(`${API_URL}/pedidos/pedido-7`, () =>
+        HttpResponse.json({
+          id: 'pedido-7',
+          estado: 'listo',
+          items: respuestaApi.pedido.items,
+          total: 17220,
+        }),
+      ),
+    )
+    const user = await renderizarConDosExpresos('mesa-4')
+
+    await user.click(screen.getByRole('button', { name: /confirmar pedido/i }))
+    await user.click(await screen.findByRole('button', { name: /actualizar estado/i }))
+
+    expect(await screen.findByText(/listo/i)).toBeInTheDocument()
+  })
 })

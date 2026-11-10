@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { crearPedido } from '../api/client'
 import { useCart } from '../cart/CartContext'
-import { formatearPrecio } from '../lib/precio' // AJUSTAR: el nombre que exporta tu precio.ts
+import { formatearPrecio } from '../lib/precio'
+import { SeguimientoPedido } from './SeguimientoPedido'
 
 type Resultado = Awaited<ReturnType<typeof crearPedido>>
 
@@ -44,8 +45,8 @@ export function ConfirmarPedido({ mesaId }: Props) {
       <section aria-labelledby="pedido-confirmado">
         <h2 id="pedido-confirmado">¡Pedido confirmado!</h2>
         <p>Número de pedido: {pedido.id}</p>
-        <p>Estado: {pedido.estado}</p>
         <p>Total: {formatearPrecio(total)}</p>
+        <SeguimientoPedido pedidoId={pedido.id} estadoInicial={pedido.estado} />
       </section>
     )
   }
